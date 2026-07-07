@@ -40,9 +40,15 @@
     scroll-behavior: smooth;
   }
 
+  html.intro-locked,
+  html.intro-locked body {
+    overflow: hidden;
+  }
+
   body {
     margin: 0;
     min-width: 320px;
+    font-family: "Noto Sans SC", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   }
 
   * {
@@ -51,26 +57,199 @@
 }
 
 @layer components {
-  .hero-section {
+  .site-shell {
+    @apply transition-opacity duration-500;
+  }
+
+  .site-shell-hidden {
+    @apply pointer-events-none opacity-0;
+  }
+
+  .site-shell-ready {
+    animation: siteReveal 0.48s ease-out both;
+  }
+
+  .intro-overlay {
+    @apply fixed inset-0 z-50 overflow-hidden px-4 pb-20 pt-6 sm:px-6;
+    background:
+      radial-gradient(circle at 50% 10%, rgba(255, 224, 127, 0.2), transparent 34rem),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.85), rgba(245, 239, 226, 0.72));
+  }
+
+  .intro-stage {
+    @apply relative flex min-h-full w-full flex-col items-center;
+  }
+
+  .intro-laptop {
+    @apply relative mx-auto w-full;
+    margin-top: clamp(1.5rem, calc((100svh - 42rem) / 2), 48rem);
+    max-width: 47.5rem;
+    transform-origin: 50% 50%;
+    z-index: 1;
+  }
+
+  .intro-laptop .laptop-frame {
+    width: min(100%, 44.25rem, calc((100svh - 15.75rem) * 1.5128205128));
+    max-height: none;
+  }
+
+  .screen-expander {
+    position: fixed;
+    left: var(--screen-left);
+    top: var(--screen-top);
+    width: var(--screen-width);
+    height: var(--screen-height);
+    z-index: 2;
+    box-sizing: border-box;
+    pointer-events: none;
+    padding: 0.75rem;
+    overflow: hidden;
+    border-radius: 0.75rem 0.75rem 0.35rem 0.35rem;
+    background: var(--color-neutral);
+    box-shadow: 0 24px 70px rgba(14, 18, 27, 0.28);
+    transform: translate3d(0, 0, 0) scale(1, 1);
+    transform-origin: 50% 50%;
+    will-change: transform, border-radius;
+    animation: screenExpandFixed 1.02s cubic-bezier(0.42, 0, 0.18, 1) forwards;
+  }
+
+  .screen-expander-screen {
+    width: 100%;
+    height: 100%;
+    border-radius: 0.35rem;
+    background:
+      repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.045) 0, rgba(255, 255, 255, 0.045) 1px, transparent 1px, transparent 4px),
+      linear-gradient(145deg, #1e9af2, #157ce0 62%, #0f67ce);
+  }
+
+  .screen-blue-cover {
+    position: fixed;
+    inset: 0;
+    z-index: 3;
+    pointer-events: none;
+    opacity: 0;
+    will-change: opacity;
+    animation: blueCoverIn 0.16s ease-out 1.02s forwards;
+    background:
+      repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.045) 0, rgba(255, 255, 255, 0.045) 1px, transparent 1px, transparent 4px),
+      linear-gradient(145deg, #1e9af2, #157ce0 62%, #0f67ce);
+  }
+
+  .intro-zooming .intro-laptop {
+    opacity: 0;
+    transition: opacity 0.12s linear 0.08s;
+  }
+
+  .intro-zooming .laptop-frame {
+    @apply bg-transparent p-0 shadow-none;
+    border-radius: 0;
+    transition:
+      padding 0.65s ease,
+      border-radius 0.65s ease,
+      background-color 0.65s ease,
+      box-shadow 0.65s ease;
+  }
+
+  .intro-zooming .terminal-screen {
+    border-radius: 0;
+  }
+
+  .intro-zooming .terminal-titlebar,
+  .intro-zooming .terminal-body {
+    @apply opacity-0;
+    transition: opacity 0.42s ease;
+  }
+
+  .intro-zooming .laptop-base,
+  .intro-zooming .laptop-shadow {
+    @apply opacity-0;
+    transform: translateY(18px);
+    transition:
+      opacity 0.35s ease,
+      transform 0.35s ease;
+  }
+
+  .front-home-section {
     @apply flex min-h-[96svh] items-center justify-center px-4 pb-28 pt-10 sm:px-6;
     background:
-      radial-gradient(circle at 50% 10%, rgba(255, 224, 127, 0.18), transparent 34rem),
-      linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(245, 239, 226, 0.65));
+      linear-gradient(90deg, rgba(28, 137, 232, 0.055) 1px, transparent 1px),
+      linear-gradient(0deg, rgba(28, 137, 232, 0.055) 1px, transparent 1px),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(245, 239, 226, 0.72));
+    background-size: 34px 34px, 34px 34px, auto;
+  }
+
+  .home-grid {
+    @apply grid min-w-0 w-full items-center gap-10 lg:grid-cols-[1.05fr_0.95fr];
+  }
+
+  .home-grid > * {
+    min-width: 0;
+  }
+
+  .home-grid h1 {
+    @apply max-w-full text-4xl font-black leading-tight sm:max-w-3xl sm:text-5xl lg:text-6xl;
+    overflow-wrap: break-word;
+  }
+
+  .home-grid p {
+    @apply mt-5 max-w-full text-base leading-8 text-base-content/68 sm:max-w-2xl sm:text-lg;
+    overflow-wrap: anywhere;
+  }
+
+  .home-actions {
+    @apply mt-8 flex flex-wrap gap-3;
+  }
+
+  .home-command-panel {
+    @apply w-full max-w-full overflow-hidden border border-base-300 bg-base-100/88 p-5 shadow-xl backdrop-blur;
+    border-radius: 0.5rem;
+  }
+
+  .home-panel-title {
+    @apply mb-2 flex items-center gap-2 font-mono text-sm font-bold text-base-content/65;
+  }
+
+  .home-command-row {
+    @apply grid w-full grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 border-t border-base-300 py-4 text-left transition hover:text-primary;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .home-command-row span {
+    @apply min-w-0 truncate font-mono text-sm text-base-content/55;
+  }
+
+  .home-command-row strong {
+    @apply min-w-0 whitespace-nowrap text-sm font-black sm:text-base;
   }
 
   .laptop-shell {
-    @apply relative mx-auto w-full max-w-4xl;
+    @apply relative mx-auto w-full;
+    max-width: 47.5rem;
   }
 
   .laptop-frame {
-    @apply relative mx-auto overflow-hidden bg-neutral p-3 shadow-2xl;
-    aspect-ratio: 16 / 10;
-    border-radius: 0.75rem 0.75rem 0.35rem 0.35rem;
-    max-height: 74svh;
+    @apply relative mx-auto overflow-hidden bg-neutral shadow-2xl;
+    width: min(100%, 44.25rem);
+    aspect-ratio: 708 / 468;
+    padding: 0 0.875rem 0.875rem;
+    border-radius: 0.875rem 0.875rem 0 0;
+    max-height: none;
+  }
+
+  .laptop-frame::before {
+    content: "";
+    display: block;
+    width: 8.125rem;
+    height: 0.875rem;
+    margin: 0 auto;
+    border-radius: 0 0 0.625rem 0.625rem;
+    background: inherit;
   }
 
   .terminal-screen {
-    @apply h-full overflow-hidden bg-primary text-primary-content;
+    @apply overflow-hidden bg-primary text-primary-content;
+    height: calc(100% - 0.875rem);
     border-radius: 0.35rem;
     background:
       repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.045) 0, rgba(255, 255, 255, 0.045) 1px, transparent 1px, transparent 4px),
@@ -78,19 +257,42 @@
   }
 
   .terminal-titlebar {
-    @apply flex h-12 items-center justify-between border-b border-white/15 px-5 text-xs font-semibold text-white/40 sm:px-7;
+    @apply flex items-center justify-between border-b border-white/15 text-white/40;
+    height: 2.875rem;
+    padding-inline: 1.25rem;
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 0.6875rem;
+    font-weight: 400;
   }
 
   .traffic-dot {
-    @apply block h-3 w-3 rounded-full;
+    @apply block rounded-full;
+    width: 0.625rem;
+    height: 0.625rem;
   }
 
   .terminal-body {
-    @apply px-5 py-5 font-mono text-sm leading-6 sm:px-8 sm:py-5 md:px-10 md:py-6;
+    padding: 1rem 1.25rem;
+    font-family: "Fira Code", "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 0.8125rem;
+    line-height: 1.7;
+  }
+
+  .terminal-body > .terminal-line:first-child {
+    @apply mt-0;
+  }
+
+  .terminal-static-block {
+    animation: terminalStaticReveal 0.56s cubic-bezier(0.2, 0.84, 0.28, 1) both;
   }
 
   .terminal-line {
-    @apply flex min-h-6 items-start gap-2 whitespace-pre-wrap text-white;
+    @apply flex items-start gap-2 whitespace-pre-wrap text-white;
+    min-height: 1.7em;
+  }
+
+  .terminal-line-content {
+    @apply min-w-0;
   }
 
   .terminal-line-command {
@@ -106,19 +308,60 @@
   }
 
   .terminal-line-highlight {
-    @apply mt-1 inline-flex w-fit rounded bg-accent px-2 font-bold text-accent-content;
+    @apply mt-1 inline-flex w-fit font-bold;
+    padding: 0.125rem 0.5rem;
+    border-radius: 0.1875rem;
+    background: #f4d758;
+    color: #1e5ba8;
+    font-size: 0.875rem;
+  }
+
+  .terminal-line-highlight .terminal-prefix {
+    color: #1e5ba8;
+  }
+
+  .terminal-line-animated {
+    animation: terminalLineIn 0.3s ease-out both;
+  }
+
+  .terminal-launch-block {
+    @apply mt-7;
   }
 
   .terminal-prefix {
-    @apply shrink-0 font-bold text-accent;
+    @apply shrink-0 font-bold;
+    color: #f4d758;
   }
 
   .terminal-progress {
-    @apply relative inline-flex h-4 w-36 overflow-hidden border border-accent bg-white/10;
+    @apply relative inline-flex overflow-hidden;
+    width: 7.5rem;
+    height: 0.875rem;
+    background:
+      radial-gradient(circle, rgba(255, 255, 255, 0.92) 0 1px, transparent 1.25px) 0 0 / 4px 4px,
+      linear-gradient(90deg, rgba(0, 222, 255, 0.36), rgba(34, 159, 255, 0.2));
   }
 
   .terminal-progress-fill {
-    @apply block h-full bg-accent transition-all duration-200;
+    @apply block h-full transition-all duration-100;
+    background: repeating-linear-gradient(90deg, #ffe16a 0 0.75rem, #f0c93c 0.75rem 0.8125rem);
+  }
+
+  .terminal-loading-row {
+    @apply mt-3 flex items-center gap-1.5 font-bold;
+    color: #f4d758;
+    font-size: 0.8125rem;
+    animation: terminalLineIn 0.3s ease-out both;
+  }
+
+  .terminal-inline-cursor {
+    display: inline-block;
+    width: 0.66em;
+    height: 1.16em;
+    margin-left: 0.16em;
+    background: rgba(255, 255, 255, 0.92);
+    vertical-align: -0.16em;
+    animation: blink 1s steps(1) infinite;
   }
 
   .terminal-cursor {
@@ -127,7 +370,10 @@
   }
 
   .laptop-base {
-    @apply mx-auto h-4 w-[108%] -translate-x-[4%] bg-base-300 shadow-lg;
+    @apply mx-auto bg-base-300 shadow-lg;
+    width: min(100%, 47.5rem);
+    height: 0.875rem;
+    transform: none;
     border-radius: 0 0 999px 999px;
     background: linear-gradient(180deg, #cfcfd2, #a9a9ad 50%, #d7d7d9);
   }
@@ -138,7 +384,50 @@
   }
 
   .laptop-shadow {
-    @apply mx-auto mt-6 h-6 w-3/5 rounded-full bg-black/10 blur-xl;
+    width: min(92%, 43.75rem);
+    height: 2.5rem;
+    margin: 0.75rem auto 0;
+    border-radius: 999px;
+    opacity: 0.82;
+    background: radial-gradient(ellipse at center, rgba(26, 26, 46, 0.24) 0%, rgba(26, 26, 46, 0.11) 36%, transparent 70%);
+    filter: blur(1px);
+  }
+
+  .intro-launch-prompt {
+    @apply relative z-50 mx-auto flex w-fit flex-col items-center transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-8 focus-visible:outline-primary;
+    margin-top: clamp(1rem, 2svh, 2.25rem);
+    background: transparent;
+    color: #8a8a9a;
+    cursor: pointer;
+    font-family: "Fira Code", "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 0.8125rem;
+    font-weight: 400;
+    line-height: 1.4;
+  }
+
+  .intro-launch-prompt:hover {
+    color: #4a4a5a;
+  }
+
+  .intro-launch-arrow {
+    display: block;
+    margin-top: 0.5rem;
+    color: currentColor;
+    font-family: "Fira Code", "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 1.125rem;
+    line-height: 1;
+    animation: launchArrowBreath 1.6s ease-in-out infinite;
+  }
+
+  .intro-nav-preview {
+    @apply fixed inset-x-0 bottom-4 z-50 flex justify-center px-4;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  @media (min-width: 640px) {
+    .terminal-progress {
+      width: 8.5rem;
+    }
   }
 
   .content-band {
@@ -146,7 +435,7 @@
   }
 
   .section-inner {
-    @apply mx-auto w-full max-w-6xl;
+    @apply mx-auto min-w-0 w-full max-w-6xl;
   }
 
   .section-kicker {
@@ -262,22 +551,164 @@
   }
 }
 
+@keyframes terminalLineIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes siteReveal {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes terminalStaticReveal {
+  from {
+    opacity: 0;
+    transform: translateY(7px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes screenExpandFixed {
+  0% {
+    border-radius: 0.35rem;
+    transform: translate3d(0, 0, 0) scale(1, 1);
+  }
+
+  100% {
+    border-radius: 0;
+    transform: translate3d(var(--screen-dx), var(--screen-dy), 0) scale(var(--screen-scale));
+  }
+}
+
+@keyframes blueCoverIn {
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes launchArrowBreath {
+  0%,
+  100% {
+    opacity: 0.46;
+    transform: translateY(0);
+  }
+
+  50% {
+    opacity: 1;
+    transform: translateY(0.45rem);
+  }
+}
+
 @media (max-width: 640px) {
+  .intro-overlay {
+    @apply pb-24 pt-8;
+  }
+
   .laptop-frame {
-    @apply p-2;
-    aspect-ratio: 10 / 11;
+    width: min(100%, 23rem);
+    aspect-ratio: 368 / 280;
+    padding: 0 0.625rem 0.625rem;
+    border-radius: 0.625rem 0.625rem 0 0;
+  }
+
+  .intro-laptop .laptop-frame {
+    width: min(100%, 23rem, calc((100svh - 15.75rem) * 1.3142857143));
+  }
+
+  .laptop-frame::before {
+    width: 5rem;
+    height: 0.625rem;
+    border-radius: 0 0 0.5rem 0.5rem;
+  }
+
+  .terminal-screen {
+    height: calc(100% - 0.625rem);
+    border-radius: 0.1875rem;
+  }
+
+  .screen-expander {
+    padding: 0.5rem;
   }
 
   .terminal-titlebar {
-    @apply h-10 px-4;
+    height: 2.375rem;
+    padding-inline: 0.75rem;
+    font-size: 0.5625rem;
   }
 
   .terminal-body {
-    @apply px-4 py-4 text-xs leading-6;
+    padding: 0.625rem 0.75rem;
+    font-size: 0.625rem;
+    line-height: 1.7;
+  }
+
+  .traffic-dot {
+    width: 0.4375rem;
+    height: 0.4375rem;
+  }
+
+  .terminal-line-highlight {
+    font-size: 0.6875rem;
   }
 
   .terminal-line-command {
     @apply mt-3;
+  }
+
+  .terminal-launch-block {
+    @apply mt-5;
+  }
+
+  .terminal-loading-row {
+    @apply gap-1 text-xs;
+  }
+
+  .front-home-section {
+    @apply items-start pt-24;
+  }
+
+  .home-grid {
+    width: min(22rem, calc(100vw - 2rem));
+    max-width: min(22rem, calc(100vw - 2rem));
+    margin-inline: 0;
+  }
+
+  .home-grid p,
+  .home-command-panel {
+    @apply w-full max-w-full;
+  }
+
+  .home-grid h1 {
+    @apply text-3xl;
+  }
+
+  .home-command-row {
+    @apply grid-cols-1 gap-1;
+  }
+
+  .home-command-row svg {
+    @apply hidden;
+  }
+
+  .home-command-row strong {
+    @apply whitespace-normal;
   }
 
   .os-canvas {

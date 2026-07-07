@@ -1,4 +1,5 @@
 import {
+  ArrowRight,
   BookOpen,
   Github,
   Home,
@@ -10,9 +11,20 @@ import {
   ZoomOut,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import type { CSSProperties } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 type SectionId = "home" | "works" | "articles" | "os";
+type IntroPhase = "booting" | "zooming" | "done";
+type ZoomRect = {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+  dx: number;
+  dy: number;
+  scale: number;
+};
 
 type Project = {
   title: string;
@@ -135,31 +147,270 @@ const terminalLines = [
   { prefix: ">", content: "1 person + AI = 1 team", kind: "highlight" },
   { prefix: "$", content: "open tommiao-os.app", kind: "command" },
   { prefix: ">", content: "launching...", kind: "output" },
-];
+] as const;
+
+type TerminalLine = (typeof terminalLines)[number];
+
+const staticTerminalLines = terminalLines.slice(0, 8);
+const launchTerminalLines = terminalLines.slice(8);
+
+function TerminalLineItem({
+  line,
+  animated = false,
+  showCursor = false,
+}: {
+  line: TerminalLine;
+  animated?: boolean;
+  showCursor?: boolean;
+}) {
+  return (
+    <div className={`terminal-line terminal-line-${line.kind} ${animated ? "terminal-line-animated" : ""}`}>
+      {line.prefix && <span className="terminal-prefix">{line.prefix}</span>}
+      <span className="terminal-line-content">
+        {line.content}
+        {showCursor && <span className="terminal-inline-cursor" aria-hidden="true" />}
+      </span>
+    </div>
+  );
+}
+
+function IntroScreen({
+  phase,
+  introStarted,
+  visibleLaunchLines,
+  showProgressBar,
+  progress,
+  zoomRect,
+  onStart,
+}: {
+  phase: IntroPhase;
+  introStarted: boolean;
+  visibleLaunchLines: number;
+  showProgressBar: boolean;
+  progress: number;
+  zoomRect: ZoomRect | null;
+  onStart: () => void;
+}) {
+  const zoomStyle = zoomRect
+    ? ({
+        "--screen-left": `${zoomRect.left}px`,
+        "--screen-top": `${zoomRect.top}px`,
+        "--screen-width": `${zoomRect.width}px`,
+        "--screen-height": `${zoomRect.height}px`,
+        "--screen-dx": `${zoomRect.dx}px`,
+        "--screen-dy": `${zoomRect.dy}px`,
+        "--screen-scale": zoomRect.scale,
+      } as CSSProperties)
+    : undefined;
+
+  return (
+    <div className={`intro-overlay intro-${phase}`} aria-label={`${profile.name} 的 CLI 启动动画`}>
+      {phase === "zooming" && zoomRect && (
+        <>
+          <div className="screen-expander" style={zoomStyle}>
+            <div className="screen-expander-screen" />
+          </div>
+          <div className="screen-blue-cover" />
+        </>
+      )}
+      <div className="intro-stage">
+        <div className="laptop-shell intro-laptop">
+          <div className="laptop-frame">
+            <div className="terminal-screen">
+              <div className="terminal-titlebar">
+                <div className="flex gap-2" aria-hidden="true">
+                  <span className="traffic-dot bg-error" />
+                  <span className="traffic-dot bg-warning" />
+                  <span className="traffic-dot bg-success" />
+                </div>
+                <span>{profile.terminalHost}</span>
+                <span className="w-14" />
+              </div>
+              <div className="terminal-body">
+                <div className="terminal-static-block">
+                  {staticTerminalLines.map((line) => (
+                    <TerminalLineItem line={line} key={line.content} />
+                  ))}
+                </div>
+
+                <div className="terminal-launch-block">
+                  {launchTerminalLines.slice(0, visibleLaunchLines).map((line) => (
+                    <TerminalLineItem
+                      animated={introStarted && line.content === "launching..."}
+                      line={line}
+                      key={line.content}
+                      showCursor={!introStarted && line.content === "open tommiao-os.app"}
+                    />
+                  ))}
+
+                  {showProgressBar && (
+                    <div className="terminal-loading-row">
+                      <span aria-hidden="true">[</span>
+                      <span className="terminal-progress" aria-label={`加载进度 ${progress}%`}>
+                        <span className="terminal-progress-fill" style={{ width: `${progress}%` }} />
+                      </span>
+                      <span aria-hidden="true">]</span>
+                      <span>{progress}%</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="laptop-base" aria-hidden="true" />
+          <div className="laptop-shadow" aria-hidden="true" />
+        </div>
+
+        {!introStarted && phase === "booting" && (
+          <button className="intro-launch-prompt" type="button" onClick={onStart}>
+            <span>Press Enter to Launch</span>
+            <span className="intro-launch-arrow" aria-hidden="true">
+              ↓
+            </span>
+          </button>
+        )}
+
+        <div className="intro-nav-preview" aria-hidden="true">
+          <div className="tabs tabs-box tabs-xs flex-nowrap bg-base-100/90 shadow-lg backdrop-blur sm:tabs-sm">
+            {navItems
+              .filter((item) => item.id !== "articles")
+              .map((item) => {
+                const Icon = item.icon;
+                const isActive = item.id === "home";
+                return (
+                  <div
+                    className={`tab h-10 gap-1 whitespace-nowrap px-3 text-xs sm:h-11 sm:gap-2 sm:px-5 sm:text-sm ${
+                      isActive ? "tab-active text-primary" : ""
+                    }`}
+                    key={item.id}
+                    role="tab"
+                  >
+                    <Icon size={15} />
+                    <span className="text-xs opacity-55">{item.number}</span>
+                    <span>{item.label}</span>
+                  </div>
+                );
+              })}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function App() {
   const [activeSection, setActiveSection] = useState<SectionId>("home");
-  const [visibleLines, setVisibleLines] = useState(1);
-  const [progress, setProgress] = useState(8);
+  const [introPhase, setIntroPhase] = useState<IntroPhase>("booting");
+  const [introStarted, setIntroStarted] = useState(false);
+  const [visibleLaunchLines, setVisibleLaunchLines] = useState(0);
+  const [showProgressBar, setShowProgressBar] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [zoomRect, setZoomRect] = useState<ZoomRect | null>(null);
   const [boardView, setBoardView] = useState({ x: 0, y: 0, scale: 1 });
   const dragState = useRef<{ pointerId: number; x: number; y: number; startX: number; startY: number } | null>(
     null,
   );
 
-  useEffect(() => {
-    const lineTimer = window.setInterval(() => {
-      setVisibleLines((current) => Math.min(current + 1, terminalLines.length));
-    }, 420);
+  const startIntro = useCallback(() => {
+    if (introPhase === "booting" && !introStarted) {
+      setIntroStarted(true);
+    }
+  }, [introPhase, introStarted]);
 
-    const progressTimer = window.setInterval(() => {
-      setProgress((current) => Math.min(current + 4, 100));
-    }, 160);
+  useEffect(() => {
+    if (introPhase !== "booting") {
+      return;
+    }
+
+    setVisibleLaunchLines(1);
+    setShowProgressBar(false);
+    setProgress(0);
+    setZoomRect(null);
+
+    if (!introStarted) {
+      return;
+    }
+
+    let progressValue = 0;
+    let progressTimer: number | undefined;
+    let progressRevealTimer: number | undefined;
+    let zoomTimer: number | undefined;
+
+    const launchLineTimer = window.setTimeout(() => setVisibleLaunchLines(2), 160);
+
+    progressRevealTimer = window.setTimeout(() => {
+      setShowProgressBar(true);
+
+      progressTimer = window.setInterval(() => {
+        progressValue = Math.min(progressValue + 10, 100);
+        setProgress(progressValue);
+
+        if (progressValue === 100) {
+          if (progressTimer) {
+            window.clearInterval(progressTimer);
+          }
+
+          zoomTimer = window.setTimeout(() => {
+            const frame = document.querySelector(".intro-overlay .laptop-frame");
+            const screen = document.querySelector(".intro-overlay .terminal-screen");
+            const frameRect = frame?.getBoundingClientRect();
+            const screenRect = screen?.getBoundingClientRect();
+
+            if (frameRect && screenRect) {
+              const screenScale = Math.max(
+                window.innerWidth / screenRect.width,
+                window.innerHeight / screenRect.height,
+              );
+
+              setZoomRect({
+                left: frameRect.left,
+                top: frameRect.top,
+                width: frameRect.width,
+                height: frameRect.height,
+                dx: window.innerWidth / 2 - (frameRect.left + frameRect.width / 2),
+                dy: window.innerHeight / 2 - (frameRect.top + frameRect.height / 2),
+                scale: screenScale * 1.05,
+              });
+            }
+
+            setIntroPhase("zooming");
+          }, 110);
+        }
+      }, 48);
+    }, 460);
 
     return () => {
-      window.clearInterval(lineTimer);
-      window.clearInterval(progressTimer);
+      window.clearTimeout(launchLineTimer);
+      if (progressRevealTimer) {
+        window.clearTimeout(progressRevealTimer);
+      }
+      if (progressTimer) {
+        window.clearInterval(progressTimer);
+      }
+      if (zoomTimer) {
+        window.clearTimeout(zoomTimer);
+      }
     };
-  }, []);
+  }, [introPhase, introStarted]);
+
+  useEffect(() => {
+    if (introPhase !== "zooming") {
+      return;
+    }
+
+    const doneTimer = window.setTimeout(() => setIntroPhase("done"), 1320);
+    return () => window.clearTimeout(doneTimer);
+  }, [introPhase]);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("intro-locked", introPhase !== "done");
+
+    if (introPhase === "done") {
+      window.requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "auto" }));
+    }
+
+    return () => document.documentElement.classList.remove("intro-locked");
+  }, [introPhase]);
 
   useEffect(() => {
     const observedSections = navItems
@@ -185,14 +436,24 @@ function App() {
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Enter" && activeSection === "home") {
+      if (event.key !== "Enter") {
+        return;
+      }
+
+      if (introPhase !== "done") {
+        event.preventDefault();
+        startIntro();
+        return;
+      }
+
+      if (activeSection === "home") {
         scrollToSection("works");
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [activeSection]);
+  }, [activeSection, introPhase, startIntro]);
 
   const scrollToSection = (id: SectionId) => {
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -243,49 +504,74 @@ function App() {
   };
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-base-100 text-base-content">
-      <section id="home" className="hero-section">
-        <div className="laptop-shell" aria-label={`${profile.name} 的 CLI 加载屏`}>
-          <div className="laptop-frame">
-            <div className="terminal-screen">
-              <div className="terminal-titlebar">
-                <div className="flex gap-2" aria-hidden="true">
-                  <span className="traffic-dot bg-error" />
-                  <span className="traffic-dot bg-warning" />
-                  <span className="traffic-dot bg-success" />
-                </div>
-                <span>{profile.terminalHost}</span>
-                <span className="w-14" />
-              </div>
-              <div className="terminal-body">
-                {terminalLines.slice(0, visibleLines).map((line, index) => (
-                  <div className={`terminal-line terminal-line-${line.kind}`} key={`${line.content}-${index}`}>
-                    {line.prefix && <span className="terminal-prefix">{line.prefix}</span>}
-                    <span>{line.content}</span>
-                  </div>
-                ))}
+    <>
+      {introPhase !== "done" && (
+        <IntroScreen
+          introStarted={introStarted}
+          onStart={startIntro}
+          phase={introPhase}
+          progress={progress}
+          showProgressBar={showProgressBar}
+          visibleLaunchLines={visibleLaunchLines}
+          zoomRect={zoomRect}
+        />
+      )}
 
-                <div className="mt-3 flex flex-wrap items-center gap-3 text-sm font-bold text-accent sm:mt-5">
-                  <span className="terminal-progress" aria-label={`加载进度 ${progress}%`}>
-                    <span className="terminal-progress-fill" style={{ width: `${progress}%` }} />
-                  </span>
-                  <span>{progress}%</span>
-                  {progress === 100 && (
-                    <button className="btn btn-xs btn-accent" onClick={() => scrollToSection("works")}>
-                      Press Enter
-                    </button>
-                  )}
+      <main
+        className={`site-shell min-h-screen overflow-x-hidden bg-base-100 text-base-content ${
+          introPhase === "done" ? "site-shell-ready" : "site-shell-hidden"
+        }`}
+      >
+        <section id="home" className="front-home-section">
+          <div className="section-inner">
+            <div className="home-grid">
+              <div>
+                <div className="section-kicker">
+                  <Sparkles size={16} />
+                  <span>tommiao.site</span>
                 </div>
-                <span className="terminal-cursor hidden sm:inline-block" aria-hidden="true" />
+                <h1>1 person + AI = 1 team</h1>
+                <p>
+                  这里是汤姆喵的个人入口：把 GitHub 项目、公众号文章和自己的 OS 看板放在同一个创作系统里。
+                </p>
+                <div className="home-actions">
+                  <button className="btn btn-primary" onClick={() => scrollToSection("works")}>
+                    <Github size={18} />
+                    看作品集
+                  </button>
+                  <button className="btn" onClick={() => scrollToSection("os")}>
+                    <Monitor size={18} />
+                    打开我的 OS
+                  </button>
+                </div>
+              </div>
+
+              <div className="home-command-panel" aria-label="网站模块入口">
+                <div className="home-panel-title">
+                  <span className="status status-success" />
+                  <span>frontend.page</span>
+                </div>
+                <button className="home-command-row" onClick={() => scrollToSection("works")}>
+                  <span>works/</span>
+                  <strong>GitHub 项目</strong>
+                  <ArrowRight size={16} />
+                </button>
+                <button className="home-command-row" onClick={() => scrollToSection("articles")}>
+                  <span>articles.md</span>
+                  <strong>公众号文章</strong>
+                  <ArrowRight size={16} />
+                </button>
+                <button className="home-command-row" onClick={() => scrollToSection("os")}>
+                  <span>tommiao-os.app</span>
+                  <strong>个人 OS 画板</strong>
+                  <ArrowRight size={16} />
+                </button>
               </div>
             </div>
           </div>
-          <div className="laptop-base" aria-hidden="true" />
-          <div className="laptop-shadow" aria-hidden="true" />
-        </div>
-      </section>
+        </section>
 
-      <section id="works" className="content-band">
+        <section id="works" className="content-band">
         <div className="section-inner">
           <div className="section-kicker">
             <Github size={16} />
@@ -327,9 +613,9 @@ function App() {
             ))}
           </div>
         </div>
-      </section>
+        </section>
 
-      <section id="articles" className="content-band bg-base-200/55">
+        <section id="articles" className="content-band bg-base-200/55">
         <div className="section-inner">
           <div className="section-kicker">
             <BookOpen size={16} />
@@ -362,9 +648,9 @@ function App() {
             ))}
           </div>
         </div>
-      </section>
+        </section>
 
-      <section id="os" className="content-band os-band">
+        <section id="os" className="content-band os-band">
         <div className="section-inner">
           <div className="section-kicker">
             <Monitor size={16} />
@@ -429,34 +715,35 @@ function App() {
             </div>
           </div>
         </div>
-      </section>
+        </section>
 
-      <footer className="px-6 pb-28 pt-12 text-center text-sm text-base-content/60">
-        <p>© 2026 {profile.name} · Built with AI & code</p>
-      </footer>
+        <footer className="px-6 pb-28 pt-12 text-center text-sm text-base-content/60">
+          <p>© 2026 {profile.name} · Built with AI & code</p>
+        </footer>
 
-      <nav className="bottom-nav" aria-label="页面导航">
-        <div role="tablist" className="tabs tabs-box tabs-xs flex-nowrap bg-base-100/90 shadow-lg backdrop-blur sm:tabs-sm">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = activeSection === item.id;
-            return (
-              <button
-                className={`tab h-10 gap-1 whitespace-nowrap px-2 text-xs sm:h-11 sm:gap-2 sm:px-5 sm:text-sm ${isActive ? "tab-active text-primary" : ""}`}
-                key={item.id}
-                onClick={() => scrollToSection(item.id)}
-                role="tab"
-                aria-selected={isActive}
-              >
-                <Icon size={15} />
-                <span className="hidden text-xs opacity-55 md:inline">{item.number}</span>
-                <span>{item.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      </nav>
-    </main>
+        <nav className="bottom-nav" aria-label="页面导航">
+          <div role="tablist" className="tabs tabs-box tabs-xs flex-nowrap bg-base-100/90 shadow-lg backdrop-blur sm:tabs-sm">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = activeSection === item.id;
+              return (
+                <button
+                  className={`tab h-10 gap-1 whitespace-nowrap px-2 text-xs sm:h-11 sm:gap-2 sm:px-5 sm:text-sm ${isActive ? "tab-active text-primary" : ""}`}
+                  key={item.id}
+                  onClick={() => scrollToSection(item.id)}
+                  role="tab"
+                  aria-selected={isActive}
+                >
+                  <Icon size={15} />
+                  <span className="hidden text-xs opacity-55 md:inline">{item.number}</span>
+                  <span>{item.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </nav>
+      </main>
+    </>
   );
 }
 
