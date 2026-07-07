@@ -1,12 +1,22 @@
 import {
+  ArrowLeft,
   ArrowRight,
   BookOpen,
+  Calendar,
+  Clock,
+  Code2,
+  ExternalLink,
+  FileText,
   Github,
   Home,
+  Layers,
   Monitor,
   Newspaper,
+  PenLine,
   RefreshCw,
+  Rocket,
   Sparkles,
+  Tags,
   ZoomIn,
   ZoomOut,
 } from "lucide-react";
@@ -16,6 +26,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 type SectionId = "home" | "works" | "articles" | "os";
 type IntroPhase = "booting" | "zooming" | "done";
+type HashRoute = {
+  section: SectionId;
+  articleSlug: string | null;
+  normalizedHash: string;
+};
 type ZoomRect = {
   left: number;
   top: number;
@@ -27,16 +42,28 @@ type ZoomRect = {
 };
 
 type Project = {
+  id: string;
   title: string;
+  subtitle: string;
   description: string;
   tags: string[];
+  year: string;
+  status: string;
+  stack: string[];
+  metrics: Array<{ label: string; value: string }>;
   href?: string;
 };
 
 type Article = {
+  slug: string;
   title: string;
   summary: string;
-  meta: string;
+  date: string;
+  tags: string[];
+  readingTime: string;
+  category: string;
+  location: string;
+  excerpt: string[];
   href?: string;
 };
 
@@ -57,37 +84,108 @@ const profile = {
 
 const githubProjects: Project[] = [
   {
+    id: "website",
     title: "tommiao-website",
+    subtitle: "个人介绍网站",
     description: "个人介绍网站，正在搭建作品、文章和个人 OS 的入口。",
-    tags: ["React", "Tailwind", "daisyUI"],
+    tags: ["Website", "Frontend", "AI"],
+    year: "2026",
+    status: "Building",
+    stack: ["React", "Tailwind CSS", "daisyUI", "Vite"],
+    metrics: [
+      { label: "Routes", value: "4" },
+      { label: "Mode", value: "CLI intro" },
+      { label: "Focus", value: "Personal OS" },
+    ],
   },
   {
+    id: "workflow-lab",
     title: "AI workflow lab",
+    subtitle: "Agent 工作流实验室",
     description: "用于沉淀 Agent 工作流、自动化脚本和个人效率实验的项目位。",
     tags: ["AI", "Automation", "Workflow"],
+    year: "2026",
+    status: "Prototype",
+    stack: ["Codex", "Scripts", "Playbooks", "Docs"],
+    metrics: [
+      { label: "Loops", value: "Daily" },
+      { label: "Output", value: "Tools" },
+      { label: "Style", value: "Reusable" },
+    ],
   },
   {
+    id: "creative-tools",
     title: "creative tools",
+    subtitle: "内容创作小工具集",
     description: "放置面向内容创作的小工具，后续可接入编辑器、生成器或看板。",
     tags: ["Tools", "Creator", "Web"],
+    year: "2025",
+    status: "Collecting",
+    stack: ["Web UI", "Prompting", "Markdown", "Assets"],
+    metrics: [
+      { label: "Use", value: "Writing" },
+      { label: "Input", value: "Ideas" },
+      { label: "Output", value: "Drafts" },
+    ],
   },
 ];
 
 const articles: Article[] = [
   {
-    title: "公众号文章占位 01",
-    summary: "这里会替换成你的公众号文章标题、摘要和原文链接。",
-    meta: "WeChat Official Account",
+    slug: "agent-first-year",
+    title: "跟 Agent 搭档的第 1 年",
+    summary: "记录我如何把 AI 从工具变成日常创作和开发的搭档。",
+    date: "2026-07-01",
+    tags: ["AI", "Workflow", "Essay"],
+    readingTime: "8min",
+    category: "公众号文章",
+    location: "Shanghai",
+    excerpt: [
+      "一开始我只是把 Agent 当成一个更快的搜索框，后来才意识到，真正变化的是工作组织方式。",
+      "当任务可以被拆成上下文、反馈和验证，个人创作就不再只是灵感驱动，而是可以被持续复利的系统。",
+    ],
   },
   {
-    title: "公众号文章占位 02",
-    summary: "可以按系列、主题或发布时间组织，保留封面位也很容易扩展。",
-    meta: "Writing / Notes",
+    slug: "personal-os",
+    title: "为什么我要搭一个自己的 OS",
+    summary: "把项目、文章、工具和灵感放进一个可演化的个人系统。",
+    date: "2026-06-18",
+    tags: ["OS", "Personal System", "Build"],
+    readingTime: "6min",
+    category: "方法论",
+    location: "Hangzhou",
+    excerpt: [
+      "个人 OS 不是一个复杂仪表盘，而是一套能让输入、加工、输出自然流动的界面。",
+      "它应该像桌面一样被使用，像笔记一样被修改，像作品集一样被展示。",
+    ],
   },
   {
-    title: "公众号文章占位 03",
-    summary: "后续你把文章清单发来，我会把这部分换成真实内容。",
-    meta: "Coming soon",
+    slug: "ship-small-tools",
+    title: "先发布小工具，再解释大愿景",
+    summary: "用小而完整的作品训练自己的产品感和表达密度。",
+    date: "2026-05-26",
+    tags: ["Product", "Tools", "Build"],
+    readingTime: "5min",
+    category: "项目复盘",
+    location: "Shanghai",
+    excerpt: [
+      "很多想法不是想清楚以后才开始做，而是在做成一个可使用的小东西时被迫变清楚。",
+      "小工具的价值不只是解决问题，也是在给未来的系统留下接口。",
+    ],
+  },
+  {
+    slug: "writing-loop",
+    title: "写作的最小闭环",
+    summary: "从一个素材到一篇可发布文章，中间需要哪些稳定动作。",
+    date: "2026-04-12",
+    tags: ["Writing", "Workflow"],
+    readingTime: "7min",
+    category: "写作",
+    location: "Shanghai",
+    excerpt: [
+      "素材、观点、结构、语气和发布节奏是五个不同层级，混在一起时最容易卡住。",
+      "我更喜欢把写作看成一次小型编译：先让内容能跑，再让表达变漂亮。",
+    ],
   },
 ];
 
@@ -136,6 +234,30 @@ const navItems: Array<{ id: SectionId; label: string; number: string; icon: Luci
   { id: "os", label: "我的OS", number: "04", icon: Monitor },
 ];
 
+const sectionIds = navItems.map((item) => item.id);
+
+function getHashRoute(): HashRoute {
+  if (typeof window === "undefined") {
+    return { section: "home", articleSlug: null, normalizedHash: "#home" };
+  }
+
+  const [rawSection, rawSlug] = window.location.hash.replace(/^#/, "").split("/");
+  const section = sectionIds.includes(rawSection as SectionId) ? (rawSection as SectionId) : "home";
+  const decodedSlug = rawSlug ? decodeURIComponent(rawSlug) : "";
+  const articleSlug =
+    section === "articles" && articles.some((article) => article.slug === decodedSlug) ? decodedSlug : null;
+
+  return {
+    section,
+    articleSlug,
+    normalizedHash: articleSlug ? `#articles/${encodeURIComponent(articleSlug)}` : `#${section}`,
+  };
+}
+
+function getHashSection(): SectionId {
+  return getHashRoute().section;
+}
+
 const terminalLines = [
   { prefix: "$", content: "whoami", kind: "command" },
   { prefix: ">", content: `${profile.name} / ${profile.handle}`, kind: "output" },
@@ -176,19 +298,23 @@ function TerminalLineItem({
 
 function IntroScreen({
   phase,
+  activeSection,
   introStarted,
   visibleLaunchLines,
   showProgressBar,
   progress,
   zoomRect,
+  onNavigate,
   onStart,
 }: {
   phase: IntroPhase;
+  activeSection: SectionId;
   introStarted: boolean;
   visibleLaunchLines: number;
   showProgressBar: boolean;
   progress: number;
   zoomRect: ZoomRect | null;
+  onNavigate: (id: SectionId) => void;
   onStart: () => void;
 }) {
   const zoomStyle = zoomRect
@@ -270,46 +396,423 @@ function IntroScreen({
           </button>
         )}
 
-        <div className="intro-nav-preview" aria-hidden="true">
-          <div className="tabs tabs-box tabs-xs flex-nowrap bg-base-100/90 shadow-lg backdrop-blur sm:tabs-sm">
-            {navItems
-              .filter((item) => item.id !== "articles")
-              .map((item) => {
-                const Icon = item.icon;
-                const isActive = item.id === "home";
-                return (
-                  <div
-                    className={`tab h-10 gap-1 whitespace-nowrap px-3 text-xs sm:h-11 sm:gap-2 sm:px-5 sm:text-sm ${
-                      isActive ? "tab-active text-primary" : ""
-                    }`}
-                    key={item.id}
-                    role="tab"
-                  >
-                    <Icon size={15} />
-                    <span className="text-xs opacity-55">{item.number}</span>
-                    <span>{item.label}</span>
-                  </div>
-                );
-              })}
+        <nav className="intro-nav-preview" aria-label="首屏导航">
+          <div className="nav-capsule" role="tablist">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = item.id === activeSection;
+              return (
+                <button
+                  className={`nav-capsule-item ${isActive ? "nav-capsule-item-active" : ""}`}
+                  key={item.id}
+                  onClick={() => onNavigate(item.id)}
+                  role="tab"
+                  type="button"
+                  aria-selected={isActive}
+                >
+                  <Icon size={15} />
+                  <span className="nav-capsule-number">{item.number}</span>
+                  <span>{item.label}</span>
+                </button>
+              );
+            })}
           </div>
-        </div>
+        </nav>
       </div>
     </div>
   );
 }
 
+function HomePage({ navigateToSection }: { navigateToSection: (id: SectionId) => void }) {
+  return (
+    <div className="home-story" id="home-page">
+      <section className="home-story-panel home-story-hero">
+        <div className="section-inner">
+          <div className="home-grid">
+            <div className="home-copy">
+              <div className="section-kicker">
+                <Sparkles size={16} />
+                <span>tommiao.site</span>
+              </div>
+              <h1>1 person + AI = 1 team</h1>
+              <p>这里是汤姆喵的个人入口：把 GitHub 项目、公众号文章和自己的 OS 看板放在同一个创作系统里。</p>
+              <div className="home-actions">
+                <button className="btn btn-primary" onClick={() => navigateToSection("works")}>
+                  <Github size={18} />
+                  看作品集
+                </button>
+                <button className="btn" onClick={() => navigateToSection("os")}>
+                  <Monitor size={18} />
+                  打开我的 OS
+                </button>
+              </div>
+            </div>
+
+            <div className="home-command-panel" aria-label="网站模块入口">
+              <div className="home-panel-title">
+                <span className="status status-success" />
+                <span>frontend.page</span>
+              </div>
+              <button className="home-command-row" onClick={() => navigateToSection("works")}>
+                <span>works/</span>
+                <strong>GitHub 项目</strong>
+                <ArrowRight size={16} />
+              </button>
+              <button className="home-command-row" onClick={() => navigateToSection("articles")}>
+                <span>articles.md</span>
+                <strong>公众号文章</strong>
+                <ArrowRight size={16} />
+              </button>
+              <button className="home-command-row" onClick={() => navigateToSection("os")}>
+                <span>tommiao-os.app</span>
+                <strong>个人 OS 画板</strong>
+                <ArrowRight size={16} />
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="home-story-panel home-story-system">
+        <div className="section-inner">
+          <div className="home-story-grid">
+            <div>
+              <div className="section-kicker">
+                <Layers size={16} />
+                <span>system map</span>
+              </div>
+              <h2>把零散输入变成可持续输出。</h2>
+              <p>我把想法、代码、文章和工具放进同一个循环里：收集、判断、构建、发布，再回到下一轮。</p>
+            </div>
+            <div className="home-flow" aria-label="个人系统流程">
+              {["Capture", "Shape", "Build", "Publish"].map((item, index) => (
+                <div className="home-flow-item" key={item}>
+                  <span>{String(index + 1).padStart(2, "0")}</span>
+                  <strong>{item}</strong>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="home-story-panel home-story-build">
+        <div className="section-inner">
+          <div className="home-story-grid">
+            <div className="home-workbench">
+              <div className="home-workbench-line">
+                <Code2 size={18} />
+                <span>code with agent</span>
+              </div>
+              <div className="home-workbench-line">
+                <PenLine size={18} />
+                <span>write in public</span>
+              </div>
+              <div className="home-workbench-line">
+                <Rocket size={18} />
+                <span>ship tiny tools</span>
+              </div>
+            </div>
+            <div>
+              <div className="section-kicker">
+                <Rocket size={16} />
+                <span>current loop</span>
+              </div>
+              <h2>小步发布，让个人站自己长出来。</h2>
+              <p>作品集承接 GitHub 项目，文章承接公众号内容，我的 OS 则负责把过程本身变成可探索的画板。</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function WorksPage({
+  selectedProject,
+  selectedProjectId,
+  setSelectedProjectId,
+}: {
+  selectedProject: Project;
+  selectedProjectId: string;
+  setSelectedProjectId: (id: string) => void;
+}) {
+  return (
+    <section className="content-band works-route" id="works-page">
+      <div className="section-inner">
+        <div className="section-kicker">
+          <Github size={16} />
+          <span>ls works/</span>
+        </div>
+        <div className="section-heading">
+          <h1>我的作品集</h1>
+          <p>左侧选择项目，右侧展示项目详情。这里先放结构和占位数据，等你给真实 GitHub 列表后直接替换。</p>
+        </div>
+
+        <div className="works-browser">
+          <aside className="works-list" aria-label="作品列表">
+            {githubProjects.map((project) => {
+              const isActive = selectedProjectId === project.id;
+              return (
+                <button
+                  className={`works-list-item ${isActive ? "works-list-item-active" : ""}`}
+                  key={project.id}
+                  onClick={() => setSelectedProjectId(project.id)}
+                  type="button"
+                >
+                  <span>{project.year}</span>
+                  <strong>{project.title}</strong>
+                  <small>{project.subtitle}</small>
+                </button>
+              );
+            })}
+          </aside>
+
+          <article className="works-preview">
+            <div className="works-preview-top">
+              <div>
+                <span className="badge badge-soft badge-primary">{selectedProject.status}</span>
+                <h2>{selectedProject.title}</h2>
+                <p>{selectedProject.description}</p>
+              </div>
+              {selectedProject.href ? (
+                <a className="btn btn-sm btn-primary" href={selectedProject.href} rel="noreferrer" target="_blank">
+                  <ExternalLink size={16} />
+                  GitHub
+                </a>
+              ) : (
+                <span className="badge badge-outline">待补充链接</span>
+              )}
+            </div>
+
+            <div className="works-preview-visual" aria-hidden="true">
+              <div className="works-preview-window">
+                <div />
+                <div />
+                <div />
+              </div>
+              <div className="works-preview-code">
+                <span>project.run()</span>
+                <strong>{selectedProject.subtitle}</strong>
+                <small>{selectedProject.stack.join(" / ")}</small>
+              </div>
+            </div>
+
+            <div className="works-metrics">
+              {selectedProject.metrics.map((metric) => (
+                <div key={metric.label}>
+                  <span>{metric.label}</span>
+                  <strong>{metric.value}</strong>
+                </div>
+              ))}
+            </div>
+
+            <div className="works-tags">
+              {selectedProject.tags.map((tag) => (
+                <span className="badge badge-soft" key={tag}>
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ArticlesPage({
+  openedArticleSlug,
+  selectedArticleSlug,
+  selectedTag,
+  onBackToArticles,
+  onOpenArticle,
+  setSelectedArticleSlug,
+  setSelectedTag,
+}: {
+  openedArticleSlug: string | null;
+  selectedArticleSlug: string;
+  selectedTag: string;
+  onBackToArticles: () => void;
+  onOpenArticle: (slug: string) => void;
+  setSelectedArticleSlug: (slug: string) => void;
+  setSelectedTag: (tag: string) => void;
+}) {
+  const tagOptions = ["全部", ...Array.from(new Set(articles.flatMap((article) => article.tags)))];
+  const sortedArticles = [...articles].sort((a, b) => b.date.localeCompare(a.date));
+  const filteredArticles =
+    selectedTag === "全部" ? sortedArticles : sortedArticles.filter((article) => article.tags.includes(selectedTag));
+  const selectedArticle =
+    filteredArticles.find((article) => article.slug === selectedArticleSlug) ?? filteredArticles[0] ?? sortedArticles[0];
+  const openedArticle = openedArticleSlug
+    ? sortedArticles.find((article) => article.slug === openedArticleSlug) ?? null
+    : null;
+  const groupedArticles = filteredArticles.reduce<Record<string, Article[]>>((groups, article) => {
+    const year = article.date.slice(0, 4);
+    groups[year] = [...(groups[year] ?? []), article];
+    return groups;
+  }, {});
+
+  useEffect(() => {
+    if (selectedArticle && selectedArticle.slug !== selectedArticleSlug) {
+      setSelectedArticleSlug(selectedArticle.slug);
+    }
+  }, [selectedArticle, selectedArticleSlug, setSelectedArticleSlug]);
+
+  if (openedArticle) {
+    return (
+      <section className="content-band articles-route article-detail-route" id="articles-page">
+        <div className="section-inner article-detail-inner">
+          <button className="article-detail-back" onClick={onBackToArticles} type="button">
+            <ArrowLeft size={16} />
+            文章列表
+          </button>
+
+          <article className="article-detail-shell">
+            <div className="article-breadcrumb">首页 / 文章 / {openedArticle.category}</div>
+            <h1>{openedArticle.title}</h1>
+            <div className="article-meta article-detail-meta">
+              <span>
+                <FileText size={14} />
+                {profile.name}
+              </span>
+              <span>
+                <Calendar size={14} />
+                {openedArticle.date}
+              </span>
+              <span>
+                <Clock size={14} />
+                {openedArticle.readingTime}
+              </span>
+            </div>
+            <p className="article-detail-summary">{openedArticle.summary}</p>
+            <div className="article-detail-tags">
+              {openedArticle.tags.map((tag) => (
+                <span className="badge badge-outline" key={tag}>
+                  {tag}
+                </span>
+              ))}
+            </div>
+            <div className="article-detail-body">
+              {openedArticle.excerpt.map((paragraph) => (
+                <p key={paragraph}>{paragraph}</p>
+              ))}
+            </div>
+          </article>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="content-band articles-route" id="articles-page">
+      <div className="section-inner">
+        <div className="section-kicker">
+          <BookOpen size={16} />
+          <span>cat articles.md</span>
+        </div>
+        <div className="section-heading">
+          <h1>我的文章</h1>
+          <p>按时间倒序排列，支持标签过滤。右侧预览后续可以接入真实公众号文章详情。</p>
+        </div>
+
+        <div className="article-tags" aria-label="文章标签筛选">
+          {tagOptions.map((tag) => (
+            <button
+              className={`badge ${selectedTag === tag ? "badge-primary" : "badge-soft"}`}
+              key={tag}
+              onClick={() => setSelectedTag(tag)}
+              type="button"
+            >
+              <Tags size={12} />
+              {tag}
+            </button>
+          ))}
+        </div>
+
+        <div className="articles-layout">
+          <div className="articles-list">
+            {Object.entries(groupedArticles).map(([year, yearArticles]) => (
+              <section className="article-year" key={year}>
+                <h2>{year}</h2>
+                {yearArticles.map((article) => {
+                  const isActive = selectedArticle.slug === article.slug;
+                  return (
+                    <button
+                      className={`article-row ${isActive ? "article-row-active" : ""}`}
+                      data-article-slug={article.slug}
+                      key={article.slug}
+                      onClick={() => onOpenArticle(article.slug)}
+                      onFocus={() => setSelectedArticleSlug(article.slug)}
+                      onMouseEnter={() => setSelectedArticleSlug(article.slug)}
+                      type="button"
+                    >
+                      <span>{article.date.slice(5)}</span>
+                      <strong>{article.title}</strong>
+                      <small>{article.readingTime}</small>
+                    </button>
+                  );
+                })}
+              </section>
+            ))}
+          </div>
+
+          <article className="article-preview">
+            <div className="article-breadcrumb">
+              首页 / 文章 / {selectedArticle.category}
+            </div>
+            <h2>{selectedArticle.title}</h2>
+            <div className="article-meta">
+              <span>
+                <FileText size={14} />
+                {profile.name}
+              </span>
+              <span>
+                <Calendar size={14} />
+                {selectedArticle.date}
+              </span>
+              <span>
+                <Clock size={14} />
+                {selectedArticle.readingTime}
+              </span>
+            </div>
+            <p className="article-summary">{selectedArticle.summary}</p>
+            <div className="article-preview-tags">
+              {selectedArticle.tags.map((tag) => (
+                <span className="badge badge-outline" key={tag}>
+                  {tag}
+                </span>
+              ))}
+            </div>
+            <div className="article-excerpt">
+              {selectedArticle.excerpt.map((paragraph) => (
+                <p key={paragraph}>{paragraph}</p>
+              ))}
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function App() {
-  const [activeSection, setActiveSection] = useState<SectionId>("home");
+  const [activeSection, setActiveSection] = useState<SectionId>(() => getHashSection());
   const [introPhase, setIntroPhase] = useState<IntroPhase>("booting");
   const [introStarted, setIntroStarted] = useState(false);
   const [visibleLaunchLines, setVisibleLaunchLines] = useState(0);
   const [showProgressBar, setShowProgressBar] = useState(false);
   const [progress, setProgress] = useState(0);
   const [zoomRect, setZoomRect] = useState<ZoomRect | null>(null);
+  const [selectedProjectId, setSelectedProjectId] = useState(githubProjects[0].id);
+  const [selectedArticleTag, setSelectedArticleTag] = useState("全部");
+  const [selectedArticleSlug, setSelectedArticleSlug] = useState(articles[0].slug);
+  const [openedArticleSlug, setOpenedArticleSlug] = useState<string | null>(() => getHashRoute().articleSlug);
   const [boardView, setBoardView] = useState({ x: 0, y: 0, scale: 1 });
   const dragState = useRef<{ pointerId: number; x: number; y: number; startX: number; startY: number } | null>(
     null,
   );
+  const selectedProject = githubProjects.find((project) => project.id === selectedProjectId) ?? githubProjects[0];
 
   const startIntro = useCallback(() => {
     if (introPhase === "booting" && !introStarted) {
@@ -413,26 +916,64 @@ function App() {
   }, [introPhase]);
 
   useEffect(() => {
-    const observedSections = navItems
-      .map((item) => document.getElementById(item.id))
-      .filter(Boolean) as HTMLElement[];
+    const syncRoute = () => {
+      const nextRoute = getHashRoute();
+      setActiveSection(nextRoute.section);
+      setOpenedArticleSlug(nextRoute.articleSlug);
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((entry) => entry.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+      if (nextRoute.articleSlug) {
+        setSelectedArticleSlug(nextRoute.articleSlug);
+      }
 
-        if (visible?.target.id) {
-          setActiveSection(visible.target.id as SectionId);
-        }
-      },
-      { threshold: [0.35, 0.55, 0.75] },
-    );
+      window.requestAnimationFrame(() => {
+        window.scrollTo({ top: 0, behavior: "auto" });
+      });
+    };
 
-    observedSections.forEach((section) => observer.observe(section));
-    return () => observer.disconnect();
+    const initialRoute = getHashRoute();
+    if (window.location.hash !== initialRoute.normalizedHash) {
+      window.history.replaceState(null, "", initialRoute.normalizedHash);
+    }
+
+    syncRoute();
+    window.addEventListener("hashchange", syncRoute);
+    return () => window.removeEventListener("hashchange", syncRoute);
   }, []);
+
+  const navigateToSection = useCallback((id: SectionId) => {
+    if (window.location.hash === `#${id}`) {
+      setActiveSection(id);
+      window.scrollTo({ top: 0, behavior: "auto" });
+      return;
+    }
+
+    window.location.hash = id;
+  }, []);
+
+  const navigateToArticle = useCallback((slug: string) => {
+    const nextHash = `#articles/${encodeURIComponent(slug)}`;
+    if (window.location.hash === nextHash) {
+      setActiveSection("articles");
+      setOpenedArticleSlug(slug);
+      setSelectedArticleSlug(slug);
+      window.scrollTo({ top: 0, behavior: "auto" });
+      return;
+    }
+
+    window.location.hash = nextHash;
+  }, []);
+
+  const navigateBackToArticles = useCallback(() => {
+    navigateToSection("articles");
+  }, [navigateToSection]);
+
+  const navigateFromIntro = useCallback(
+    (id: SectionId) => {
+      navigateToSection(id);
+      startIntro();
+    },
+    [navigateToSection, startIntro],
+  );
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -447,17 +988,13 @@ function App() {
       }
 
       if (activeSection === "home") {
-        scrollToSection("works");
+        navigateToSection("works");
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [activeSection, introPhase, startIntro]);
-
-  const scrollToSection = (id: SectionId) => {
-    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
+  }, [activeSection, introPhase, navigateToSection, startIntro]);
 
   const handleBoardPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
     event.currentTarget.setPointerCapture(event.pointerId);
@@ -507,7 +1044,9 @@ function App() {
     <>
       {introPhase !== "done" && (
         <IntroScreen
+          activeSection={activeSection}
           introStarted={introStarted}
+          onNavigate={navigateFromIntro}
           onStart={startIntro}
           phase={introPhase}
           progress={progress}
@@ -522,135 +1061,30 @@ function App() {
           introPhase === "done" ? "site-shell-ready" : "site-shell-hidden"
         }`}
       >
-        <section id="home" className="front-home-section">
-          <div className="section-inner">
-            <div className="home-grid">
-              <div>
-                <div className="section-kicker">
-                  <Sparkles size={16} />
-                  <span>tommiao.site</span>
-                </div>
-                <h1>1 person + AI = 1 team</h1>
-                <p>
-                  这里是汤姆喵的个人入口：把 GitHub 项目、公众号文章和自己的 OS 看板放在同一个创作系统里。
-                </p>
-                <div className="home-actions">
-                  <button className="btn btn-primary" onClick={() => scrollToSection("works")}>
-                    <Github size={18} />
-                    看作品集
-                  </button>
-                  <button className="btn" onClick={() => scrollToSection("os")}>
-                    <Monitor size={18} />
-                    打开我的 OS
-                  </button>
-                </div>
-              </div>
+        {activeSection === "home" && <HomePage navigateToSection={navigateToSection} />}
 
-              <div className="home-command-panel" aria-label="网站模块入口">
-                <div className="home-panel-title">
-                  <span className="status status-success" />
-                  <span>frontend.page</span>
-                </div>
-                <button className="home-command-row" onClick={() => scrollToSection("works")}>
-                  <span>works/</span>
-                  <strong>GitHub 项目</strong>
-                  <ArrowRight size={16} />
-                </button>
-                <button className="home-command-row" onClick={() => scrollToSection("articles")}>
-                  <span>articles.md</span>
-                  <strong>公众号文章</strong>
-                  <ArrowRight size={16} />
-                </button>
-                <button className="home-command-row" onClick={() => scrollToSection("os")}>
-                  <span>tommiao-os.app</span>
-                  <strong>个人 OS 画板</strong>
-                  <ArrowRight size={16} />
-                </button>
-              </div>
-            </div>
-          </div>
-        </section>
+        {activeSection === "works" && (
+          <WorksPage
+            selectedProject={selectedProject}
+            selectedProjectId={selectedProjectId}
+            setSelectedProjectId={setSelectedProjectId}
+          />
+        )}
 
-        <section id="works" className="content-band">
-        <div className="section-inner">
-          <div className="section-kicker">
-            <Github size={16} />
-            <span>ls works/</span>
-          </div>
-          <div className="section-heading">
-            <h1>我的作品集</h1>
-            <p>先放 GitHub 项目的展示位，后续你给我项目列表后我会换成真实仓库、链接和截图。</p>
-          </div>
+        {activeSection === "articles" && (
+          <ArticlesPage
+            openedArticleSlug={openedArticleSlug}
+            onBackToArticles={navigateBackToArticles}
+            onOpenArticle={navigateToArticle}
+            selectedArticleSlug={selectedArticleSlug}
+            selectedTag={selectedArticleTag}
+            setSelectedArticleSlug={setSelectedArticleSlug}
+            setSelectedTag={setSelectedArticleTag}
+          />
+        )}
 
-          <div className="grid gap-4 lg:grid-cols-3">
-            {githubProjects.map((project) => (
-              <article className="card card-border bg-base-100 shadow-sm" key={project.title}>
-                <div className="card-body">
-                  <div className="flex items-start justify-between gap-3">
-                    <h2 className="card-title text-lg">{project.title}</h2>
-                    <Github className="shrink-0 text-primary" size={20} />
-                  </div>
-                  <p className="min-h-20 text-sm leading-6 text-base-content/70">{project.description}</p>
-                  <div className="flex flex-wrap gap-2">
-                    {project.tags.map((tag) => (
-                      <span className="badge badge-soft" key={tag}>
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                  <div className="card-actions mt-2">
-                    {project.href ? (
-                      <a className="btn btn-sm btn-primary" href={project.href} rel="noreferrer" target="_blank">
-                        <Github size={16} />
-                        GitHub
-                      </a>
-                    ) : (
-                      <span className="badge badge-outline">待补充链接</span>
-                    )}
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
-        </div>
-        </section>
-
-        <section id="articles" className="content-band bg-base-200/55">
-        <div className="section-inner">
-          <div className="section-kicker">
-            <BookOpen size={16} />
-            <span>cat articles.md</span>
-          </div>
-          <div className="section-heading">
-            <h1>我的文章</h1>
-            <p>公众号文章入口会按主题整理，适合放长期沉淀、教程和项目复盘。</p>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-3">
-            {articles.map((article) => (
-              <article className="card card-border bg-base-100 shadow-sm" key={article.title}>
-                <div className="card-body">
-                  <span className="text-xs font-semibold uppercase text-primary">{article.meta}</span>
-                  <h2 className="card-title text-lg">{article.title}</h2>
-                  <p className="text-sm leading-6 text-base-content/70">{article.summary}</p>
-                  <div className="card-actions mt-auto">
-                    {article.href ? (
-                      <a className="btn btn-sm" href={article.href} rel="noreferrer" target="_blank">
-                        <Newspaper size={16} />
-                        阅读
-                      </a>
-                    ) : (
-                      <span className="badge badge-outline">待补充原文</span>
-                    )}
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
-        </div>
-        </section>
-
-        <section id="os" className="content-band os-band">
+        {activeSection === "os" && (
+        <section className="content-band os-band" id="os-page">
         <div className="section-inner">
           <div className="section-kicker">
             <Monitor size={16} />
@@ -716,26 +1150,31 @@ function App() {
           </div>
         </div>
         </section>
+        )}
 
         <footer className="px-6 pb-28 pt-12 text-center text-sm text-base-content/60">
           <p>© 2026 {profile.name} · Built with AI & code</p>
         </footer>
 
         <nav className="bottom-nav" aria-label="页面导航">
-          <div role="tablist" className="tabs tabs-box tabs-xs flex-nowrap bg-base-100/90 shadow-lg backdrop-blur sm:tabs-sm">
+          <div role="tablist" className="nav-capsule">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeSection === item.id;
               return (
                 <button
-                  className={`tab h-10 gap-1 whitespace-nowrap px-2 text-xs sm:h-11 sm:gap-2 sm:px-5 sm:text-sm ${isActive ? "tab-active text-primary" : ""}`}
+                  className={`nav-capsule-item ${isActive ? "nav-capsule-item-active" : ""}`}
                   key={item.id}
-                  onClick={() => scrollToSection(item.id)}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    navigateToSection(item.id);
+                  }}
                   role="tab"
+                  type="button"
                   aria-selected={isActive}
                 >
                   <Icon size={15} />
-                  <span className="hidden text-xs opacity-55 md:inline">{item.number}</span>
+                  <span className="nav-capsule-number">{item.number}</span>
                   <span>{item.label}</span>
                 </button>
               );

@@ -38,6 +38,8 @@
 @layer base {
   html {
     scroll-behavior: smooth;
+    overflow-y: scroll;
+    scrollbar-gutter: stable;
   }
 
   html.intro-locked,
@@ -49,6 +51,9 @@
     margin: 0;
     min-width: 320px;
     font-family: "Noto Sans SC", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background:
+      radial-gradient(circle at 50% 10%, rgba(255, 224, 127, 0.2), transparent 34rem),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.85), rgba(245, 239, 226, 0.72));
   }
 
   * {
@@ -59,6 +64,10 @@
 @layer components {
   .site-shell {
     @apply transition-opacity duration-500;
+    background:
+      radial-gradient(circle at 50% 10%, rgba(255, 224, 127, 0.2), transparent 34rem),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.85), rgba(245, 239, 226, 0.72));
+    background-attachment: fixed;
   }
 
   .site-shell-hidden {
@@ -171,11 +180,7 @@
 
   .front-home-section {
     @apply flex min-h-[96svh] items-center justify-center px-4 pb-28 pt-10 sm:px-6;
-    background:
-      linear-gradient(90deg, rgba(28, 137, 232, 0.055) 1px, transparent 1px),
-      linear-gradient(0deg, rgba(28, 137, 232, 0.055) 1px, transparent 1px),
-      linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(245, 239, 226, 0.72));
-    background-size: 34px 34px, 34px 34px, auto;
+    background: transparent;
   }
 
   .home-grid {
@@ -221,6 +226,288 @@
 
   .home-command-row strong {
     @apply min-w-0 whitespace-nowrap text-sm font-black sm:text-base;
+  }
+
+  .home-story {
+    background: transparent;
+  }
+
+  .home-story-panel {
+    @apply flex min-h-svh items-center px-4 py-24 sm:px-6;
+    animation: storyPanelIn 0.65s cubic-bezier(0.2, 0.84, 0.28, 1) both;
+  }
+
+  .home-story-panel h2 {
+    @apply max-w-3xl text-3xl font-black leading-tight sm:text-5xl;
+  }
+
+  .home-story-panel p {
+    @apply mt-5 max-w-2xl text-base leading-8 text-base-content/68 sm:text-lg;
+  }
+
+  .home-story-system {
+    background: transparent;
+  }
+
+  .home-story-build {
+    background: transparent;
+  }
+
+  .home-story-grid {
+    @apply grid items-center gap-10 lg:grid-cols-[0.9fr_1.1fr];
+  }
+
+  .home-flow {
+    @apply grid gap-3;
+  }
+
+  .home-flow-item {
+    @apply grid grid-cols-[auto_minmax(0,1fr)] items-center gap-4 border border-base-300 bg-base-100/80 p-4 shadow-sm backdrop-blur;
+    border-radius: 0.5rem;
+    animation: storyPanelIn 0.7s cubic-bezier(0.2, 0.84, 0.28, 1) both;
+  }
+
+  .home-flow-item span {
+    @apply font-mono text-sm font-black text-primary/55;
+  }
+
+  .home-flow-item strong {
+    @apply text-xl font-black;
+  }
+
+  .home-workbench {
+    @apply grid gap-4 border border-base-300 bg-neutral p-5 text-neutral-content shadow-xl;
+    border-radius: 0.5rem;
+  }
+
+  .home-workbench-line {
+    @apply flex items-center justify-between gap-4 border border-white/10 bg-white/5 px-4 py-4 font-mono text-sm font-bold;
+    border-radius: 0.4rem;
+  }
+
+  .works-route,
+  .articles-route {
+    min-height: 100svh;
+  }
+
+  .works-browser {
+    @apply grid gap-5 lg:grid-cols-[20rem_minmax(0,1fr)];
+  }
+
+  .works-list {
+    @apply grid gap-2 self-start;
+  }
+
+  .works-list-item {
+    @apply grid gap-1 border border-base-300 bg-base-100/72 p-4 text-left shadow-sm transition;
+    min-height: 6.25rem;
+    border-radius: 0.5rem;
+  }
+
+  .works-list-item:hover,
+  .works-list-item-active {
+    @apply border-primary/35 bg-base-100 text-primary shadow-md;
+  }
+
+  .works-list-item span {
+    @apply font-mono text-xs font-bold text-base-content/45;
+  }
+
+  .works-list-item strong {
+    @apply text-base font-black;
+  }
+
+  .works-list-item small {
+    @apply text-sm text-base-content/58;
+  }
+
+  .works-preview {
+    @apply border border-base-300 bg-base-100/86 p-5 shadow-xl backdrop-blur;
+    border-radius: 0.5rem;
+    min-height: 36rem;
+  }
+
+  .works-preview-top {
+    @apply grid gap-4 md:grid-cols-[minmax(0,1fr)_auto];
+  }
+
+  .works-preview-top h2 {
+    @apply mt-3 text-3xl font-black;
+  }
+
+  .works-preview-top p {
+    @apply mt-3 max-w-2xl leading-7 text-base-content/68;
+  }
+
+  .works-preview-visual {
+    @apply my-6 overflow-hidden border border-base-300 bg-base-200;
+    border-radius: 0.5rem;
+  }
+
+  .works-preview-window {
+    @apply flex gap-2 border-b border-base-300 bg-base-100/80 px-4 py-3;
+  }
+
+  .works-preview-window div {
+    @apply h-2.5 w-2.5 rounded-full bg-primary/55;
+  }
+
+  .works-preview-code {
+    @apply grid gap-2 p-6 font-mono;
+    min-height: 13rem;
+    background:
+      linear-gradient(90deg, rgba(28, 137, 232, 0.09) 1px, transparent 1px),
+      linear-gradient(0deg, rgba(28, 137, 232, 0.09) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+
+  .works-preview-code span {
+    @apply text-sm font-bold text-primary;
+  }
+
+  .works-preview-code strong {
+    @apply text-2xl font-black;
+  }
+
+  .works-preview-code small {
+    @apply text-base-content/55;
+  }
+
+  .works-metrics {
+    @apply grid gap-3 sm:grid-cols-3;
+  }
+
+  .works-metrics div {
+    @apply border border-base-300 bg-base-200/55 p-4;
+    border-radius: 0.5rem;
+  }
+
+  .works-metrics span {
+    @apply block font-mono text-xs font-bold text-base-content/45;
+  }
+
+  .works-metrics strong {
+    @apply mt-1 block text-xl font-black;
+  }
+
+  .works-tags {
+    @apply mt-5 flex flex-wrap gap-2;
+  }
+
+  .article-tags {
+    @apply mb-8 flex flex-wrap gap-2;
+  }
+
+  .article-tags .badge {
+    @apply h-8 cursor-pointer gap-1.5 border border-base-300 px-3;
+  }
+
+  .articles-layout {
+    @apply grid gap-8 lg:grid-cols-[minmax(0,1fr)_24rem];
+  }
+
+  .articles-list {
+    @apply grid gap-8;
+  }
+
+  .article-year h2 {
+    @apply mb-3 font-mono text-xl font-black text-base-content/45;
+  }
+
+  .article-row {
+    @apply grid w-full grid-cols-[4.5rem_minmax(0,1fr)_auto] items-baseline gap-3 border-b border-base-300 py-4 text-left transition;
+    background: transparent;
+  }
+
+  .article-row:hover,
+  .article-row-active {
+    @apply text-primary;
+  }
+
+  .article-row span,
+  .article-row small {
+    @apply font-mono text-xs text-base-content/45;
+  }
+
+  .article-row strong {
+    @apply min-w-0 text-base font-bold;
+  }
+
+  .article-preview {
+    @apply sticky top-8 self-start border border-base-300 bg-base-100/86 p-5 shadow-xl backdrop-blur;
+    border-radius: 0.5rem;
+  }
+
+  .article-breadcrumb {
+    @apply mb-4 font-mono text-xs font-bold text-base-content/42;
+  }
+
+  .article-preview h2 {
+    @apply text-2xl font-black leading-tight;
+  }
+
+  .article-meta {
+    @apply mt-4 flex flex-wrap gap-3 text-xs text-base-content/55;
+  }
+
+  .article-meta span {
+    @apply inline-flex items-center gap-1.5;
+  }
+
+  .article-summary {
+    @apply mt-5 leading-7 text-base-content/68;
+  }
+
+  .article-preview-tags {
+    @apply mt-4 flex flex-wrap gap-2;
+  }
+
+  .article-excerpt {
+    @apply mt-6 grid gap-4 border-t border-base-300 pt-5 text-sm leading-7 text-base-content/72;
+  }
+
+  .article-detail-inner {
+    @apply max-w-3xl;
+  }
+
+  .article-detail-back {
+    @apply mb-6 inline-flex items-center gap-2 font-mono text-sm font-bold text-base-content/55 transition;
+    background: transparent;
+  }
+
+  .article-detail-back:hover {
+    @apply text-primary;
+  }
+
+  .article-detail-shell {
+    @apply border border-base-300 bg-base-100/86 p-7 shadow-xl backdrop-blur;
+    border-radius: 0.5rem;
+  }
+
+  .article-detail-shell h1 {
+    @apply text-3xl font-black leading-tight sm:text-5xl;
+  }
+
+  .article-detail-meta {
+    @apply mt-5;
+  }
+
+  .article-detail-summary {
+    @apply mt-7 text-lg leading-8 text-base-content/68;
+  }
+
+  .article-detail-tags {
+    @apply mt-5 flex flex-wrap gap-2;
+  }
+
+  .article-detail-body {
+    @apply mt-8 grid gap-6 border-t border-base-300 pt-8 text-base-content/76;
+    font-size: 15px;
+    line-height: 1.9;
+  }
+
+  .article-detail-body p {
+    @apply m-0;
   }
 
   .laptop-shell {
@@ -424,6 +711,65 @@
     padding-bottom: env(safe-area-inset-bottom);
   }
 
+  .nav-capsule {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.125rem;
+    width: min(36rem, calc(100vw - 2rem));
+    min-height: 3.25rem;
+    padding: 0.25rem;
+    align-items: stretch;
+    border: 1px solid rgba(26, 26, 46, 0.08);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.84);
+    box-shadow: 0 8px 24px rgba(26, 26, 46, 0.11);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+
+  .nav-capsule-item {
+    display: inline-flex;
+    width: 100%;
+    height: 2.75rem;
+    min-width: 0;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: color-mix(in oklch, var(--color-base-content) 46%, transparent);
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
+    transform: translateZ(0);
+    transition:
+      background-color 0.18s ease,
+      box-shadow 0.18s ease,
+      color 0.18s ease;
+  }
+
+  .nav-capsule-item:hover {
+    color: color-mix(in oklch, var(--color-base-content) 68%, transparent);
+  }
+
+  .nav-capsule-item-active {
+    background: rgba(255, 255, 255, 0.82);
+    color: var(--color-primary);
+    box-shadow:
+      0 7px 18px rgba(26, 26, 46, 0.1),
+      inset 0 0 0 1px rgba(26, 26, 46, 0.05);
+  }
+
+  .nav-capsule-number {
+    font-family: "Fira Code", "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 0.72rem;
+    font-weight: 500;
+    opacity: 0.58;
+  }
+
   @media (min-width: 640px) {
     .terminal-progress {
       width: 8.5rem;
@@ -455,11 +801,7 @@
   }
 
   .os-band {
-    background:
-      linear-gradient(90deg, rgba(28, 137, 232, 0.08) 1px, transparent 1px),
-      linear-gradient(0deg, rgba(28, 137, 232, 0.08) 1px, transparent 1px),
-      linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(246, 241, 230, 0.72));
-    background-size: 32px 32px, 32px 32px, auto;
+    background: transparent;
   }
 
   .os-window {
@@ -570,6 +912,18 @@
 
   to {
     opacity: 1;
+  }
+}
+
+@keyframes storyPanelIn {
+  from {
+    opacity: 0;
+    transform: translateY(1.25rem);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
@@ -709,6 +1063,68 @@
 
   .home-command-row strong {
     @apply whitespace-normal;
+  }
+
+  .home-story-panel {
+    @apply min-h-[86svh] py-16;
+  }
+
+  .home-story-panel h2 {
+    @apply text-3xl;
+  }
+
+  .works-browser,
+  .articles-layout,
+  .home-story-grid {
+    @apply grid-cols-1;
+  }
+
+  .works-preview {
+    min-height: auto;
+  }
+
+  .article-row {
+    @apply grid-cols-[3.75rem_minmax(0,1fr)];
+  }
+
+  .article-row small {
+    @apply hidden;
+  }
+
+  .article-preview {
+    @apply static;
+  }
+
+  .article-detail-shell {
+    @apply p-5;
+  }
+
+  .article-detail-shell h1 {
+    @apply text-3xl;
+  }
+
+  .article-detail-summary {
+    @apply text-base leading-8;
+  }
+
+  .article-detail-body {
+    line-height: 1.9;
+  }
+
+  .nav-capsule {
+    width: min(100%, calc(100vw - 1rem));
+    min-height: 3rem;
+    padding: 0.2rem;
+  }
+
+  .nav-capsule-item {
+    height: 2.55rem;
+    gap: 0.2rem;
+    font-size: 0.75rem;
+  }
+
+  .nav-capsule-number {
+    display: none;
   }
 
   .os-canvas {
